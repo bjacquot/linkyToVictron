@@ -69,7 +69,6 @@ QEM24EnergyMeter::QEM24EnergyMeter(QObject *parent)
     setRegistre( 0x5006, 0x3100 ); //Serial Digit  13
     setRegistre( 0xA000, 7 ); //Application : Doit être égal à 7 pour Victron
     //Infos triphasées non utilisées:
-    setRegistre( 0x0000, 2300 ); // V-L1
     setRegistre( 0x0001, 0 );
     setRegistre( 0x0002, 0 ); // V-L3
     setRegistre( 0x0003, 0 );
@@ -81,11 +80,9 @@ QEM24EnergyMeter::QEM24EnergyMeter(QObject *parent)
     setRegistre( 0x000F, 0 );
     setRegistre( 0x0010, 0 ); // A-L2
     setRegistre( 0x0011, 0 );
-    setRegistre( 0x0012, 1000 ); // W-L1
     setRegistre( 0x0013, 0 );
     setRegistre( 0x0016, 0 ); // W-L2
     setRegistre( 0x0017, 0 );
-    setRegistre( 0x0018, 1000 ); // VA-L1
     setRegistre( 0x0019, 0 );
     setRegistre( 0x0042, 0 ); // kWh-L2
     setRegistre( 0x0043, 0 );
@@ -107,6 +104,9 @@ QEM24EnergyMeter::QEM24EnergyMeter(QObject *parent)
     setRegistre( 0x0048, 0 ); // kWh+ T2
     setRegistre( 0x0049, 0 );
 
+    setPuissanceInstantanee(0);
+    setTension(0);
+
 
 
     modbusDevice.setConnectionParameter(QModbusDevice::NetworkPortParameter, 502);
@@ -116,8 +116,8 @@ QEM24EnergyMeter::QEM24EnergyMeter(QObject *parent)
     //modbusDevice.setValue(QModbusServer::DeviceBusy, 0xfff);
 
 
-    connect(&modbusDevice, &QModbusTcpServer::dataWritten,
-            this, &QEM24EnergyMeter::updateWidgets);
+    //connect(&modbusDevice, &QModbusTcpServer::dataWritten,
+    //        this, &QEM24EnergyMeter::updateWidgets);
     connect(&modbusDevice, &QModbusTcpServer::stateChanged,
             this, &QEM24EnergyMeter::onStateChanged);
     connect(&modbusDevice, &QModbusTcpServer::errorOccurred,
@@ -129,7 +129,7 @@ QEM24EnergyMeter::QEM24EnergyMeter(QObject *parent)
     modbusDevice.setData(QModbusDataUnit::Coils, 0, 1);
     modbusDevice.setData(QModbusDataUnit::Coils, 1, 2);
 
-    modbusDevice.connectDevice();
+
 
 }
 
@@ -138,6 +138,24 @@ void QEM24EnergyMeter::setRegistre(quint16 address, quint16 value)
     modbusDevice.setData(QModbusDataUnit::HoldingRegisters,address,value);
     modbusDevice.setData(QModbusDataUnit::InputRegisters,address,value);
 }
+
+void QEM24EnergyMeter::setRegistre32(quint16 address, int value)
+{
+    {
+        qint16 v;
+        v=(value&0xFFFF);
+        modbusDevice.setData(QModbusDataUnit::HoldingRegisters,address,v);
+        modbusDevice.setData(QModbusDataUnit::InputRegisters,address,v);
+    }
+    {
+        qint16 v;
+        v=((value>>16)&0xFFFF);
+        modbusDevice.setData(QModbusDataUnit::HoldingRegisters,address+1,v);
+        modbusDevice.setData(QModbusDataUnit::InputRegisters,address+1,v);
+    }
+}
+
+
 
 void QEM24EnergyMeter::onStateChanged(int state)
 {
@@ -161,4 +179,38 @@ void QEM24EnergyMeter::handleDeviceError(QModbusDevice::Error newError)
 void QEM24EnergyMeter::clientDisconnected(QTcpSocket *modbusClient)
 {
     qDebug()<<"deconnexion : "<<modbusClient->peerAddress() ;
+}
+
+void QEM24EnergyMeter::setPuissanceInstantanee(int p)
+{
+    setRegistre32(0x12,p*10); // puissance active L1
+    setRegistre32(0x28,p*10); // puissance totale
+
+}
+
+void QEM24EnergyMeter::setTension(int u)
+{
+    setRegistre( 0x0000, u*10 ); // V-L1
+}
+
+void QEM24EnergyMeter::setCourant(int i)
+{
+    setRegistre32( 0x000C, i*1000 ); // I-L1
+}
+
+void QEM24EnergyMeter::setIndexConso(long index)
+{
+    setRegistre32( 0x0034, index ); //
+    setRegistre32( 0x0040, index ); //
+}
+
+void QEM24EnergyMeter::setIndexInjection(long index)
+{
+    setRegistre32( 0x004E, index ); //
+
+}
+
+void QEM24EnergyMeter::startModbus()
+{
+    if (modbusDevice.state()!=QModbusDevice::ConnectedState) modbusDevice.connectDevice();
 }

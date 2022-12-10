@@ -18,6 +18,7 @@ private:
     QModbusDataUnitMap reg;
 
     void setRegistre(quint16 address, quint16 value);
+    void setRegistre32(quint16 address, int value);
 
 private Q_SLOTS:
     void onStateChanged(int state);
@@ -25,6 +26,15 @@ private Q_SLOTS:
     void handleDeviceError(QModbusDevice::Error newError);
 
     void clientDisconnected(QTcpSocket *modbusClient);
+
+public :
+    void setPuissanceInstantanee(int p);
+    void setTension(int u);
+    void setCourant(int i);
+    void setIndexConso(long index);
+    void setIndexInjection(long index);
+
+    void startModbus();
 
 signals:
 

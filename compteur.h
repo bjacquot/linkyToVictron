@@ -35,6 +35,7 @@ private:
 
 
     QEM24EnergyMeter energyMeter;
+    bool isEnergyMeterStarted=false;
 
 
     int nbEtiquettes;
@@ -47,10 +48,19 @@ private:
     int pConsoPrec=-9999;
     int iInst;
     int iInstPrec=-9999;
+    int uInst=230;
+    int uInstPrec=0;
     long indexInj;
     long indexInjPrec=-9999;
     int pSolaire=0;
     bool injection;
+    int64_t indexHC=0;
+    int64_t indexHCprec=0;
+    int64_t indexHP=0;
+    int64_t indexHPprec=0;
+    int64_t indexTotal=0;
+    int64_t indexTotalprec=0;
+
 
 
 signals:

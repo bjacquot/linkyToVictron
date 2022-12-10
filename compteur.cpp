@@ -27,7 +27,7 @@ Compteur::Compteur(QObject *parent)
     connect(&m_client,SIGNAL(disconnected()),this,SLOT(mqttDisConnected()));
     connect(&retryMqttTimer,SIGNAL(timeout()),this,SLOT(mqttReconnect()));
 
-    listeEtiquette.append("EASF01");
+/*    listeEtiquette.append("EASF01");
     listeTopic.append("fluide/elec/hc");
     listeValeur.append("");
     listeNewValeur.append("");
@@ -40,7 +40,7 @@ Compteur::Compteur(QObject *parent)
     listeNewValeur.append("");
     listeDiv.append(100);
     listeArrondi.append(0);
-
+*/
     listeEtiquette.append("PTEC");
     listeTopic.append("fluide/elec/tarif");
     listeValeur.append("");
@@ -129,18 +129,19 @@ void Compteur::getData()
                                 if (iInst<0) iInst=-iInst;
                                 pInst=pSout;
                             }
-                            /*                            if (iInst!=iInstPrec)
+                            if (iInst!=iInstPrec)
                             {
                                 iInstPrec=iInst;
                                 //qDebug()<<"topic"<<"fluide/elec/iinst"<<iInst;
-                                mqttSend("fluide/elec/iinst",QString::number(iInst),1,true);
+                                //mqttSend("fluide/elec/iinst",QString::number(iInst),1,true);
+                                energyMeter.setCourant(iInst);
                             }
-*/
-                            if (pInst!=pInstPrec)
+                            else if (pInst!=pInstPrec)
                             {
                                 pInstPrec=pInst;
                                 //qDebug()<<"topic"<<"fluide/elec/puissance"<<pInst;
                                 mqttSend("homeassistant/sensor/teleinfoPinst/state",QString::number(pInst),1,true);
+                                energyMeter.setPuissanceInstantanee(pInst);
                             }
                             pConso=pInst+pSolaire;
                             if (pConso!=pConsoPrec)
@@ -152,6 +153,30 @@ void Compteur::getData()
                             {
                                 indexInjPrec=indexInj;
                                 mqttSend("homeassistant/sensor/teleinfoIndexInjection/state",QString::number(indexInj/10)+'.'+QString::number(indexInj%10),1,true);
+                                energyMeter.setIndexInjection(indexInj);
+                            }
+                            if (indexHC!=indexHCprec)
+                            {
+                                indexHCprec=indexHC;
+                                indexTotal=indexHC+indexHP;
+                                mqttSend("homeassistant/sensor/teleinfoIndexHC/state",QString::number(indexHC/10)+'.'+QString::number(indexHC%10),1,true);
+                            }
+                            if (indexHP!=indexHPprec)
+                            {
+                                indexHPprec=indexHP;
+                                indexTotal=indexHC+indexHP;
+                                mqttSend("homeassistant/sensor/teleinfoIndexHP/state",QString::number(indexHP/10)+'.'+QString::number(indexHP%10),1,true);
+                            }
+                            if (indexTotal!=indexTotalprec)
+                            {
+                                indexTotalprec=indexTotal;
+                                energyMeter.setIndexConso(indexTotal);
+
+                            }
+                            if (uInst!=uInstPrec)
+                            {
+                                uInstPrec=uInst;
+                                energyMeter.setTension(uInst);
                             }
 
                             for(int i=0;i<nbEtiquettes;i++)
@@ -163,11 +188,20 @@ void Compteur::getData()
                                     mqttSend(listeTopic[i],listeValeur[i],1,true);
                                 }
                             }
+                            if (isEnergyMeterStarted==false)
+                            {
+                                energyMeter.startModbus();
+                                isEnergyMeterStarted=true;
+                            }
                         }
                     }
                     else if (liste.at(0)=="IRMS1")
                     {
                         iInst=liste.at(1).toInt();
+                    }
+                    else if (liste.at(0)=="URMS1")
+                    {
+                        uInst=liste.at(1).toInt();
                     }
                     else if (liste.at(0)=="SINSTS")
                     {
@@ -184,6 +218,14 @@ void Compteur::getData()
                     else if (liste.at(0)=="EAIT")
                     {
                         indexInj=liste.at(1).toLong()/100;
+                    }
+                    else if (liste.at(0)=="EASF01")
+                    {
+                        indexHC = liste.at(1).toLong()/100;
+                    }
+                    else if (liste.at(0)=="EASF02")
+                    {
+                        indexHP = liste.at(1).toLong()/100;
                     }
                     else
                     {
@@ -244,6 +286,8 @@ void Compteur::mqttConnected()
     addHomeAssistant("IndexHC","energy","kWh");
     addHomeAssistant("IndexHP","energy","kWh");
     addHomeAssistant("IndexInjection","energy","kWh");
+    addHomeAssistant("IndexHP","energy","kWh");
+    addHomeAssistant("IndexHC","energy","kWh");
 
     qDebug()<<"connect to Mosquitto !";
 }
