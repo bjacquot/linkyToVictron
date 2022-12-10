@@ -2,154 +2,13 @@
 #include <QDebug>
 #include <QString>
 
-/*
-PJOURF+1        0000C001 07008002 1700C001 NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE U
-  ADSC  812061050715    1
-VTIC    02      J
-DATE    H211223140802           ;
-NGTF    H PLEINE/CREUSE         \
-LTARF    HEURE  PLEINE          A
-EAST    018063371       ,
-EASF01  009242478       F
-EASF02  008820893       I
-EASF03  000000000       $
-EASF04  000000000       %
-EASF05  000000000       &
-EASF06  000000000       '
-EASF07  000000000       (
-EASF08  000000000       )
-EASF09  000000000       *
-EASF10  000000000       "
-EASD01  009242478       D
-EASD02  008820893       G
-EASD03  000000000       "
-EASD04  000000000       #
-EAIT    002487735       )
-ERQ1    000002119       H
-ERQ2    000001142       D
-ERQ3    000325124       N
-ERQ4    002330833       T
-IRMS1   008     6
-URMS1   235     D
-PREF    12      B
-PCOUP   12      \
-SINSTS  01905   U
-SMAXSN  H211223042418   11190   7
-SMAXSN-1        H211222054856   14280
-SINSTI  00000   <
-SMAXIN  H211223111510   01730   "
-SMAXIN-1        H211222000000   00000   +
-CCASN   H211223140000   00454   8
-CCASN-1 H211223133000   00310   O
-UMOY1   H211223140000   237     *
-STGE    003A4501        C
-MSG1         PAS DE          MESSAGE            <
-PRM     04520405165913  .
-RELAIS  000     B
-NTARF   02      O
-NJOURF  00      &
-NJOURF+1        00      B
-PJOURF+1        0000C001 07008002 1700C001 NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE U
-  ADSC  812061050715    1
-VTIC    02      J
-DATE    H211223140803           <
-NGTF    H PLEINE/CREUSE         \
-LTARF    HEURE  PLEINE          A
-EAST    018063373       .
-EASF01  009242478       F
-EASF02  008820895       K
-EASF03  000000000       $
-EASF04  000000000       %
-EASF05  000000000       &
-EASF06  000000000       '
-EASF07  000000000       (
-EASF08  000000000       )
-EASF09  000000000       *
-EASF10  000000000       "
-EASD01  009242478       D
-EASD02  008820895       I
-EASD03  000000000       "
-EASD04  000000000       #
-EAIT    002487735       )
-ERQ1    000002119       H
-ERQ2    000001142       D
-ERQ3    000325124       N
-ERQ4    002330833       T
-IRMS1   008     6
-URMS1   235     D
-PREF    12      B
-PCOUP   12      \
-SINSTS  01929   [
-SMAXSN  H211223042418   11190   7
-SMAXSN-1        H211222054856   14280
-SINSTI  00000   <
-SMAXIN  H211223111510   01730   "
-SMAXIN-1        H211222000000   00000   +
-CCASN   H211223140000   00454   8
-CCASN-1 H211223133000   00310   O
-UMOY1   H211223140000   237     *
-STGE    003A4501        C
-MSG1         PAS DE          MESSAGE            <
-PRM     04520405165913  .
-RELAIS  000     B
-NTARF   02      O
-NJOURF  00      &
-NJOURF+1        00      B
-PJOURF+1        0000C001 07008002 1700C001 NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE U
-  ADSC  812061050715    1
 
 
 
-
-
-
-
-
-
-ADSC  812061050715    1
-VTIC    02      J
-DATE    E210610220556           <
-NGTF    H PLEINE/CREUSE         \
-LTARF    HEURE  PLEINE          A
-EAST    012060129       $
-EASF01  005811879       I
-EASF02  006248250       >
-EASF03  000000000       $
-EASF04  000000000       %
-EASF05  000000000       &
-EASF06  000000000       '
-EASF07  000000000       (
-EASF08  000000000       )
-EASF09  000000000       *
-EASF10  000000000       "
-EASD01  005811878       F
-EASD02  006248251       =
-EASD03  000000000       "
-EASD04  000000000       #
-IRMS1   003     1
-URMS1   236     E
-PREF    12      B
-PCOUP   12      \
-SINSTS  00725   T
-SMAXSN  E210610000934   05560   4
-SMAXSN-1        E210609233927   05570   %
-CCASN   E210610220000   00630   /
-CCASN-1 E210610213000   00512   N
-UMOY1   E210610220000   236     $
-STGE    003A4401        B
-MSG1         PAS DE          MESSAGE            <
-PRM     04520405165913  .
-RELAIS  000     B
-NTARF   02      O
-NJOURF  00      &
-NJOURF+1        00      B
-PJOURF+1        0000C001 06368002 1636C001 NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE NONUTILE      %
-
- */
 
 
 Compteur::Compteur(QObject *parent)
-    : QObject(parent), serial(this),timerReadData(this)
+    : QObject(parent), serial(this), timerReadData(this),energyMeter(parent)
 {
     serial.setPortName("domotiqueCompteur");
     serial.setBaudRate(9600);
@@ -270,7 +129,7 @@ void Compteur::getData()
                                 if (iInst<0) iInst=-iInst;
                                 pInst=pSout;
                             }
-/*                            if (iInst!=iInstPrec)
+                            /*                            if (iInst!=iInstPrec)
                             {
                                 iInstPrec=iInst;
                                 //qDebug()<<"topic"<<"fluide/elec/iinst"<<iInst;

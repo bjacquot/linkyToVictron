@@ -29,3 +29,6 @@ HEADERS += \
     qem24energymeter.h
 
 #LIBS += "/opt/electronique/navis/sysroot/lib/aarch64-linux-gnu/libudev.so.1"
+
+DISTFILES += \
+    teleinfoData.txt

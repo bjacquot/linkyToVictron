@@ -7,6 +7,8 @@
 #include <QtMqtt/QMqttClient>
 #include <QStringList>
 
+#include "qem24energymeter.h"
+
 class Compteur : public QObject
 {
     Q_OBJECT
@@ -30,6 +32,10 @@ private:
     QStringList listeTopic;
     QList<int> listeDiv;
     QList<int> listeArrondi;
+
+
+    QEM24EnergyMeter energyMeter;
+
 
     int nbEtiquettes;
 
